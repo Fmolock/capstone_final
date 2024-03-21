@@ -12,9 +12,24 @@ const createTables = async()=> {
   const SQL = `
     DROP TABLE IF EXISTS users;
     CREATE TABLE users(
-      id UUID PRIMARY KEY,
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       username VARCHAR(20) UNIQUE NOT NULL,
       password VARCHAR(255) NOT NULL
+    );
+    DROP TABLE IF EXISTS businesses;
+    CREATE TABLE businesses(
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      name VARCHAR(20) UNIQUE NOT NULL,
+      description VARCHAR(255) NOT NULL
+    );
+    
+    DROP TABLE IF EXISTS reviews;
+    CREATE TABLE reviews(
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      comment VARCHAR(255) NOT NULL,
+      rating INTEGER NOT NULL,
+      user_id UUID NOT NULL,
+      business_id UUID NOT NULL
     );
   `;
   await client.query(SQL);
@@ -32,6 +47,16 @@ const createUser = async({ username, password})=> {
   const response = await client.query(SQL, [uuid.v4(), username, await bcrypt.hash(password, 5)]);
   return response.rows[0];
 };
+
+const createBusiness = async({ name, description })=> {
+  
+  const SQL = `
+    INSERT INTO businesses(name, description) VALUES($1, $2) RETURNING *
+  `;
+  const response = await client.query(SQL, [ name, description]);
+  return response.rows[0];
+};
+
 
 const authenticate = async({ username, password })=> {
   const SQL = `
@@ -78,11 +103,57 @@ const fetchUsers = async()=> {
   return response.rows;
 };
 
+const fetchBusinesses = async()=> {
+  const SQL = `
+    SELECT id, name, description FROM businesses;
+  `;
+  const response = await client.query(SQL);
+  return response.rows;
+};
+
+const fetchBusinessReviews = async(id)=> {
+  const SQL = `
+    SELECT * FROM reviews WHERE business_id = $1;
+  `;
+  const response = await client.query(SQL, [id]);
+  return response.rows;
+};
+
+const fetchUsersReviews = async(id)=> {
+  const SQL = `
+    SELECT * FROM reviews WHERE user_id = $1;
+  `;
+  const response = await client.query(SQL, [id]);
+  return response.rows;
+};
+
+const createReview = async({comment, rating, user_id, business_id})=> {
+  const SQL = `
+    INSERT INTO reviews(id, comment, rating, user_id, business_id) VALUES($1, $2, $3, $4, $5) RETURNING *
+  `;
+  const response = await client.query(SQL, [uuid.v4(), comment, rating, user_id, business_id]);
+  return response.rows;
+};
+
+const fetchReviews = async()=> {
+  const SQL = `
+    SELECT * FROM reviews;
+  `;
+  const response = await client.query(SQL);
+  return response.rows;
+};
+
 module.exports = {
   client,
   createTables,
   createUser,
   fetchUsers,
   authenticate,
-  findUserWithToken
+  findUserWithToken,
+  fetchBusinesses,
+  fetchReviews,
+  createBusiness,
+  createReview,
+  fetchBusinessReviews,
+  fetchUsersReviews
 };
