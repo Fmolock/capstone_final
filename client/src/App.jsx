@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, Route, Routes } from 'react-router-dom';
+import { NavLink, Route, Routes, useNavigate } from 'react-router-dom';
 import Users from './Users';
 import Businesses from './Businesses';
 import CreateReview from './CreateReview';
@@ -12,9 +12,9 @@ function App() {
   const [users, setUsers] = useState([]);
   const [businesses, setBusinesses] = useState([]);
   const [reviews, setReviews] = useState([]);
-
-  useEffect(()=> {
-    const attemptLoginWithToken = async()=> {
+  const navigate = useNavigate();
+  
+const attemptLoginWithToken = async()=> {
       const token = window.localStorage.getItem('token');
       if(token){
         const response = await fetch(`/api/auth/me`, {
@@ -31,6 +31,9 @@ function App() {
         }
       }
     };
+  
+  useEffect(()=> {
+    
     attemptLoginWithToken();
   }, []);
   
@@ -86,32 +89,46 @@ function App() {
     window.localStorage.removeItem('token');
     setAuth({});
   };
-
-  return (
-    <>
-      <h1>Acme Business Reviews</h1>
-      <nav>
-        <Link to='/'>Home</Link>
-        <Link to='/businesses'>Businesses ({ businesses.length })</Link>
-        <Link to='/users'>Users ({ users.length })</Link>
-        {
-          auth.id ? <Link to='/createReview'>Create Review</Link> : <Link to='/'>Register/Login</Link>
-        }
-     </nav>
-    {
-      auth.id && <button onClick={ logout }>Logout { auth.username }</button>
+  
+  const handleDeleteReview = async (reviewId)=>{
+    console.log(reviewId);
+    const response = await fetch('/api/reviews/' + reviewId, {
+      method: "DELETE"
+    })
+    const json = await response.json();
+    if(response.ok){
+      setReviews((prev)=>prev.filter((review)=>review.id !== reviewId));
     }
-      <Routes>
-        <Route path='/' element={
-          <Home
-            authAction = { authAction }
-            auth = { auth }
-            businesses = { businesses }
-            users = { users }
-            reviews = { reviews }
-          />
-        } />
-        <Route path='/businesses' element={<Businesses businesses={ businesses.map((business)=>{
+    else {
+      throw json;
+    }
+  };
+  
+  const createReview = async (e, comment, rating, business_id)=>{
+    e.preventDefault();
+    const response = await fetch('/api/auth/reviews', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        comment, 
+        rating, 
+        user_id:auth.id, 
+        business_id
+      })
+    })
+    const json = await response.json();
+    console.log(json);
+    if(response.ok){
+      const review = json[0];
+      setReviews((prev)=>prev.concat(review));
+      navigate(`/businesses/${review.business_id}`);
+    }
+    else {
+      throw json;
+    }
+  };
+  
+ const fullBusinesses =  businesses.map((business)=>{
           let total = 0;
           let count = 0;
           for(const review of reviews){
@@ -124,12 +141,39 @@ function App() {
             ...business,
             avgRating:  count > 0 ?  total / count : 0
           }
-        }) } />} />
-        <Route path='/businesses/:id' element={<BusinessReviews/>}/>
-        <Route path='/users' element={<Users users={ users}/>} />
-        <Route path='/users/:id' element={<UsersReviews/>} />
+        }) 
+
+  return (
+    <>
+      <h1>Acme Business Reviews</h1>
+      <nav>
+        <NavLink end to='/'>Home</NavLink>
+        <NavLink to='/businesses'>Businesses ({ businesses.length })</NavLink>
+        <NavLink to='/users'>Users ({ users.length })</NavLink>
         {
-          !!auth.id && <Route path='/createReview' element={<CreateReview businesses={businesses} auth={auth}/>} />
+          auth.id ? <NavLink to='/createReview'>Create Review</NavLink> : <NavLink end to='/'>Register/Login</NavLink>
+        }
+     </nav>
+    {
+      auth.id && <button onClick={ logout }>Logout { auth.username }</button>
+    }
+      <Routes>
+        <Route path='/' element={
+          <Home
+            authAction = { authAction }
+            auth = { auth }
+            businesses = { fullBusinesses }
+            users = { users }
+            reviews = { reviews }
+            
+          />
+        } />
+        <Route path='/businesses' element={<Businesses businesses={ fullBusinesses } />} />
+        <Route path='/businesses/:id' element={<BusinessReviews reviews={reviews} auth={ auth } onDelete={handleDeleteReview}/>}/>
+        <Route path='/users' element={<Users users={ users}/>} />
+        <Route path='/users/:id' element={<UsersReviews reviews={reviews} auth={ auth } onDelete={handleDeleteReview}/>} />
+        {
+          !!auth.id && <Route path='/createReview' element={<CreateReview onCreate={createReview} businesses={businesses} auth={auth}/>} />
         }
       </Routes>
     </>

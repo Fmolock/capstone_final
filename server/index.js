@@ -10,7 +10,8 @@ const {
   createBusiness,
   createReview,
   fetchBusinessReviews,
-  fetchUsersReviews
+  fetchUsersReviews,
+  deleteReview
 } = require('./db');
 const express = require('express');
 const app = express();
@@ -117,10 +118,22 @@ app.post('/api/auth/reviews', async(req, res, next)=> {
   }
 });
 
+app.delete('/api/reviews/:reviewId', async(req, res, next)=> {
+  try {
+    const deletedInfo = await deleteReview(req.params.reviewId);
+    res.send(deletedInfo);
+  }
+  catch(ex){
+    next(ex);
+  }
+});
+
 app.use((err, req, res, next)=> {
   console.log(err);
   res.status(err.status || 500).send({ error: err.message ? err.message : err });
 });
+
+
 
 const init = async()=> {
   const port = process.env.PORT || 3000;

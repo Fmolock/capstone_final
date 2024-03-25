@@ -18,7 +18,7 @@
 ## authenticated users
 
 - a loggedin user should be able to create a review for a business
-- a loggedin user should be able to remove a view which they created
+- a loggedin user should be able to remove a review which they created
 
   
 - the wireframes provide a visual representation of the functionality which is described

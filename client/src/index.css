@@ -20,3 +20,20 @@ nav {
   padding: 0.5rem;
   color: cornSilk;
 }
+
+
+
+nav a.active {
+  border: 1px solid black;
+  box-sizing: border-box;
+}
+
+.row {
+  display: flex;
+}
+
+.row > * {
+  flex-basis: 0;
+  min-width: 0;
+  flex-grow: 1;
+}

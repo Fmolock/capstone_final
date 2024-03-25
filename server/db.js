@@ -143,6 +143,14 @@ const fetchReviews = async()=> {
   return response.rows;
 };
 
+const deleteReview = async(reviewId)=> {
+  const SQL = `
+    DELETE FROM reviews WHERE id = $1;
+  `;
+  const response = await client.query(SQL, [reviewId]);
+  return response.rows;
+};
+
 module.exports = {
   client,
   createTables,
@@ -155,5 +163,6 @@ module.exports = {
   createBusiness,
   createReview,
   fetchBusinessReviews,
-  fetchUsersReviews
+  fetchUsersReviews,
+  deleteReview
 };

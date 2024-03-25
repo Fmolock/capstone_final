@@ -12,10 +12,10 @@ const Home = ({ auth, authAction, logout, businesses, users, reviews })=> {
         Display some interesting information about our { reviews.length } Reviews
       </p>
       {
-        !auth.id ? <>
+        !auth.id ? <div className='row'>
           <AuthForm authAction={ authAction } mode='login'/>
           <AuthForm authAction={ authAction } mode='register'/>
-          </>
+          </div>
         : null 
       }
     </div>
