@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 
 const BusinessReviews = ( {auth, onDelete, reviews } )=> {
   const {id} = useParams();
+  //finsihed
   //const [reviews, setReviews] = useState([]);
   // useEffect(()=>{
   //     async function fetchBusinessReview(){
